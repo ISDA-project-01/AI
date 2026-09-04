@@ -1,0 +1,31 @@
+models:
+  master_synthesis:
+    name: "gemma:2b"
+    runtime: "ollama"
+    fallback: "gemma:2b-instruct-q4_0"
+    role: "synthesis"
+    ram_gb: 2.5
+
+  pc2:
+    primary: "qwen2.5-coder:3b"
+    fallback: "qwen2.5:3b-instruct"
+    runtime: "ollama"
+    ram_gb: 3.0
+
+  pc3:
+    primary: "gemma2:2b"
+    fallback: "gemma:2b"
+    runtime: "ollama"
+    ram_gb: 2.5
+
+  pc4:
+    primary: "llama3.2:3b"
+    fallback: "llama3.1:8b-instruct-q2_K"
+    runtime: "ollama"
+    ram_gb: 3.2
+
+  pc5:
+    primary: "deepseek-r1:1.5b"
+    fallback: "deepseek-r1:7b"
+    runtime: "ollama"
+    ram_gb: 2.0

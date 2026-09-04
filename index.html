@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VishalAI - Parallel Intelligence Cluster</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { font-size: 1.8rem; color: #38bdf8; text-align: center; margin-bottom: 20px; }
+        .chat-box { background: #1e293b; border-radius: 8px; padding: 20px; height: 450px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #334155; }
+        .msg { margin-bottom: 15px; line-height: 1.5; }
+        .user-msg { color: #38bdf8; font-weight: 600; }
+        .ai-msg { color: #f1f5f9; background: #334155; padding: 12px; border-radius: 6px; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        input[type="text"] { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; }
+        button { padding: 12px 20px; border-radius: 6px; border: none; background: #0284c7; color: white; cursor: pointer; font-weight: 600; }
+        button:hover { background: #0369a1; }
+        .file-inputs { margin-top: 10px; display: flex; gap: 10px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VishalAI Parallel Intelligence Cluster</h1>
+        <div class="chat-box" id="chat">
+            <div class="msg ai-msg">Welcome to VAPIC. Enter your prompt below to distribute across 5 PC nodes.</div>
+        </div>
+        <div class="controls">
+            <input type="text" id="prompt" placeholder="Ask a question or request code generation...">
+            <button onclick="sendChat()">Send</button>
+        </div>
+        <div class="file-inputs">
+            <label>Web Search: <input type="checkbox" id="webSearch"></label>
+            <input type="file" id="fileUpload">
+            <button onclick="uploadFile()">Upload File/Image</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendChat() {
+            const promptInput = document.getElementById('prompt');
+            const webSearch = document.getElementById('webSearch').checked;
+            const chat = document.getElementById('chat');
+            const text = promptInput.value.trim();
+            if (!text) return;
+
+            chat.innerHTML += `<div class="msg user-msg">User: ${text}</div>`;
+            promptInput.value = '';
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: text, web_search: webSearch})
+                });
+                const data = await resp.json();
+                chat.innerHTML += `<div class="msg ai-msg"><strong>VAPIC Cluster Output (Quality: ${data.quality_score}/100):</strong><br>${data.final_synthesis.replace(/\n/g, '<br>')}</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            } catch (err) {
+                chat.innerHTML += `<div class="msg ai-msg" style="color:#ef4444;">Error communicating with cluster.</div>`;
+            }
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+            if (!file) return alert("Select a file first!");
+
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<div class="msg user-msg">Uploaded File: ${file.name}</div>`;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('prompt', 'Analyze this file.');
+
+            const endpoint = file.type.startsWith('image/') ? '/api/image' : '/api/files';
+
+            try {
+                const resp = await fetch(endpoint, { method: 'POST', body: formData });
+                const data = await resp.json();
+                chat.innerHTML += `<div class="msg ai-msg"><strong>VAPIC File Analysis Output:</strong><br>${data.final_synthesis.replace(/\n/g, '<br>')}</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            } catch (err) {
+                chat.innerHTML += `<div class="msg ai-msg" style="color:#ef4444;">Error processing file.</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
