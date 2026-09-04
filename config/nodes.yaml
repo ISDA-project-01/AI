@@ -1,0 +1,35 @@
+nodes:
+  - id: "pc1"
+    name: "Master Node"
+    role: "master"
+    ip: "192.168.50.11"
+    port: 8000
+    model_key: "master_synthesis"
+
+  - id: "pc2"
+    name: "AI Peer Node 1"
+    role: "peer"
+    ip: "192.168.50.12"
+    port: 8001
+    model_key: "pc2"
+
+  - id: "pc3"
+    name: "AI Peer Node 2"
+    role: "peer"
+    ip: "192.168.50.13"
+    port: 8002
+    model_key: "pc3"
+
+  - id: "pc4"
+    name: "AI Peer Node 3"
+    role: "peer"
+    ip: "192.168.50.14"
+    port: 8003
+    model_key: "pc4"
+
+  - id: "pc5"
+    name: "AI Peer Node 4"
+    role: "peer"
+    ip: "192.168.50.15"
+    port: 8004
+    model_key: "pc5"

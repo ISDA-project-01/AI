@@ -1,0 +1,46 @@
+# VishalAI Parallel Intelligence Cluster (VAPIC) Main Configuration
+
+system:
+  cluster_name: "VishalAI Parallel Intelligence Cluster"
+  system_id: "VAPIC"
+  private_domain: "vapic.local"
+  master_host: "pc1.vapic.local"
+  master_ip: "192.168.50.11"
+  api_port: 8000
+  tls_enabled: false
+  secret_key_env: "VAPIC_SECRET_KEY"
+
+cluster:
+  heartbeat_interval: 5
+  request_timeout: 60
+  retry_count: 2
+  min_responses_required: 2
+
+verification:
+  max_rounds: 3
+  min_quality_score: 85
+  enable_code_validation: true
+
+storage:
+  workspace_dir: "./jobs"
+  logs_dir: "./logs"
+  shared_dir: "./shared"
+  max_upload_mb: 50
+
+voice:
+  enabled: true
+  whisper_model: "base"
+  tts_engine: "pyttsx3"
+
+vision:
+  enabled: true
+  provider: "local_mock"
+
+search:
+  enabled: true
+  providers:
+    - duckduckgo
+    - searxng
+    - wikipedia
+    - bing_mock
+    - google_mock

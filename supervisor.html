@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAPIC - Supervisor Mobile Control</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 16px; }
+        h1 { font-size: 1.4rem; color: #38bdf8; text-align: center; }
+        .box { background: #1e293b; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #334155; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; min-width: 120px; }
+        .btn-cancel { background: #ef4444; color: white; }
+        .btn-retry { background: #eab308; color: black; }
+        .btn-pause { background: #3b82f6; color: white; }
+        label { display: block; margin-top: 10px; color: #94a3b8; font-size: 0.9rem; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; box-sizing: border-box; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>VAPIC Supervisor Mobile Control</h1>
+
+    <div class="box" id="authBox">
+        <h3>Supervisor Login</h3>
+        <label>Username</label>
+        <input type="text" id="username" value="supervisor">
+        <label>Password</label>
+        <input type="password" id="password" value="superpassword123">
+        <div class="btn-group">
+            <button style="background: #22c55e; color: white;" onclick="login()">Login</button>
+        </div>
+    </div>
+
+    <div class="box" id="controlBox" style="display: none;">
+        <h3>Active Job Controls</h3>
+        <label>Target Job ID</label>
+        <input type="text" id="jobId" placeholder="e.g. JOB-20260904-a1b2c3">
+
+        <div class="btn-group">
+            <button class="btn-cancel" onclick="sendCommand('CANCEL_JOB')">Cancel Job</button>
+            <button class="btn-retry" onclick="sendCommand('RETRY_JOB')">Retry Job</button>
+            <button class="btn-pause" onclick="sendCommand('PAUSE_JOB')">Pause Job</button>
+        </div>
+
+        <div id="logs" style="margin-top: 15px; font-size: 0.85rem; background: #0f172a; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+            Log output initialized...
+        </div>
+    </div>
+
+    <script>
+        let token = '';
+
+        async function login() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            try {
+                const resp = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    token = data.token;
+                    document.getElementById('authBox').style.display = 'none';
+                    document.getElementById('controlBox').style.display = 'block';
+                    log("Authenticated as " + data.username);
+                } else {
+                    alert("Login failed!");
+                }
+            } catch (e) {
+                alert("Error connecting to server");
+            }
+        }
+
+        async function sendCommand(cmd) {
+            const jid = document.getElementById('jobId').value;
+            try {
+                const resp = await fetch('/api/supervisor/command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({command: cmd, job_id: jid})
+                });
+                const data = await resp.json();
+                log(data.message || data.error);
+            } catch (e) {
+                log("Failed to send command.");
+            }
+        }
+
+        function log(msg) {
+            const l = document.getElementById('logs');
+            l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            l.scrollTop = l.scrollHeight;
+        }
+    </script>
+</body>
+</html>

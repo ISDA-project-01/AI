@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAPIC - Laptop Administration Console</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #090d16; color: #e2e8f0; margin: 0; padding: 24px; }
+        h1 { color: #38bdf8; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; }
+        .card h3 { margin-top: 0; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; }
+        .stat { font-size: 1.8rem; font-weight: bold; color: #f8fafc; }
+        .status-online { color: #22c55e; font-weight: bold; }
+        .status-offline { color: #ef4444; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <h1>VAPIC Laptop Administration Console</h1>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Master CPU Usage</h3>
+            <div class="stat" id="masterCpu">--%</div>
+        </div>
+        <div class="card">
+            <h3>Master RAM Usage</h3>
+            <div class="stat" id="masterRam">-- GB</div>
+        </div>
+        <div class="card">
+            <h3>Active Cluster Nodes</h3>
+            <div class="stat" id="activeNodes">0 / 5</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Cluster Nodes Status</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Node ID</th>
+                    <th>Role</th>
+                    <th>IP Address</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                    <th>Last Heartbeat</th>
+                </tr>
+            </thead>
+            <tbody id="nodesTable">
+                <tr><td colspan="6">Loading cluster status...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchStatus() {
+            try {
+                const resp = await fetch('/api/status');
+                const data = await resp.json();
+
+                document.getElementById('masterCpu').innerText = data.system_metrics.cpu_percent + '%';
+                document.getElementById('masterRam').innerText = data.system_metrics.ram.used_gb + ' / ' + data.system_metrics.ram.total_gb + ' GB';
+
+                const health = data.cluster_health;
+                const tbody = document.getElementById('nodesTable');
+                tbody.innerHTML = '';
+
+                let onlineCount = 1; // PC1 Master is online
+
+                // Add PC1 Master explicitly
+                tbody.innerHTML += `
+                    <tr>
+                        <td>PC1</td>
+                        <td>Master Gateway</td>
+                        <td>192.168.50.11</td>
+                        <td>gemma:2b</td>
+                        <td><span class="status-online">ONLINE</span></td>
+                        <td>Active</td>
+                    </tr>
+                `;
+
+                const nodeKeys = ['pc2', 'pc3', 'pc4', 'pc5'];
+                const ips = {'pc2': '192.168.50.12', 'pc3': '192.168.50.13', 'pc4': '192.168.50.14', 'pc5': '192.168.50.15'};
+                const models = {'pc2': 'qwen2.5-coder:3b', 'pc3': 'gemma2:2b', 'pc4': 'llama3.2:3b', 'pc5': 'deepseek-r1:1.5b'};
+
+                nodeKeys.forEach(nid => {
+                    const info = health[nid];
+                    const isOnline = info && info.status === 'ONLINE';
+                    if (isOnline) onlineCount++;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${nid.toUpperCase()}</td>
+                            <td>Peer AI Node</td>
+                            <td>${ips[nid]}</td>
+                            <td>${models[nid]}</td>
+                            <td><span class="${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? 'ONLINE' : 'OFFLINE'}</span></td>
+                            <td>${info ? info.seconds_since_heartbeat + 's ago' : 'No signal'}</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('activeNodes').innerText = `${onlineCount} / 5`;
+
+            } catch (e) {
+                console.error("Failed to load status:", e);
+            }
+        }
+
+        fetchStatus();
+        setInterval(fetchStatus, 5000);
+    </script>
+</body>
+</html>
